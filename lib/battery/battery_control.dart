@@ -26,5 +26,5 @@ class BatteryControl{
   
 }
 
-/// 电池电量监听器
+/// 电池电量监听器2
 typedef QuantityListener(double quantity);
