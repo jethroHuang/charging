@@ -1,11 +1,10 @@
 /// 电池电量控制器
 class BatteryControl{
 
-  List<QuantityListener> listeners;
+  QuantityListener listener;
   double value;
 
   BatteryControl(){
-    listeners =List();
     value = 0;
   }
 
@@ -17,14 +16,12 @@ class BatteryControl{
 
   /// 通知电池电量监听器
   void _notice(){
-    listeners.forEach((listener){
-      listener(value);
-    });
+    listener(value);
   }
 
   /// 添加电池电量监听器
-  void addListener(QuantityListener listener){
-    listeners.add(listener);
+  void setListener(QuantityListener listener){
+    listener=listener;
   }
   
 }
