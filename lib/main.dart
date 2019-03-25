@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:charging/battery/default_battery.dart';
+import 'package:charging/battery/battery_control.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,10 +20,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  BatteryControl control;
+
+  void initState() {
+    super.initState();
+    control = new BatteryControl();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      
+    return Center(
+      child: Container(
+        margin: EdgeInsets.only(bottom: 200),
+        width: MediaQuery.of(context).size.width * 0.7,
+        child: DefaultBattery(control),
+      ),
     );
   }
 }
