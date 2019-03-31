@@ -11,24 +11,38 @@ class DefaultBattery extends StatefulWidget {
   _DefaultBatteryState createState() => _DefaultBatteryState();
 }
 
-class _DefaultBatteryState extends State<DefaultBattery> with TickerProviderStateMixin{
+class _DefaultBatteryState extends State<DefaultBattery>
+    with TickerProviderStateMixin {
   double _quantity;
   AnimationController _controller;
-  double _animationQuantity=0;
-
+  double _animationQuantity = 0;
 
   void initState() {
     super.initState();
     _quantity = widget.control.value;
-    _controller = AnimationController(duration: Duration(seconds: 2),vsync: this);
-    
-    _controller.addListener((){
-      
+    _controller =
+        AnimationController(duration: Duration(seconds: 2), vsync: this);
+    Animation<double> doubleAnim;
+
+    _controller..addListener(() {
+      if (doubleAnim != null) {
+        _animationQuantity = doubleAnim.value;
+      }
+      setState(() {});
+    })..addStatusListener((status){
+      if(status==AnimationStatus.forward){
+        widget.control.setState(ChargingState.charging);
+      }else if(status==AnimationStatus.dismissed){
+        widget.control.setState(ChargingState.chargingEnd);
+      }
     });
+
     widget.control.setListener((value) {
-      
+      doubleAnim = Tween(begin: _quantity,end: value).animate(
+        CurvedAnimation(parent: _controller,curve: Curves.easeIn)
+      );
+      _controller.forward();
     });
-    
   }
 
   @override
@@ -36,7 +50,7 @@ class _DefaultBatteryState extends State<DefaultBattery> with TickerProviderStat
     return Container(
       width: MediaQuery.of(context).size.width,
       child: CustomPaint(
-        painter: DefaultBatteryPainter(Colors.red,_animationQuantity),
+        painter: DefaultBatteryPainter(Colors.red, _animationQuantity),
       ),
     );
   }
