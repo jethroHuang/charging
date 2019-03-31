@@ -1,5 +1,6 @@
 import 'package:charging/battery/battery_control.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/animation.dart';
 
 class DefaultBattery extends StatefulWidget {
   final BatteryControl control;
@@ -10,17 +11,24 @@ class DefaultBattery extends StatefulWidget {
   _DefaultBatteryState createState() => _DefaultBatteryState();
 }
 
-class _DefaultBatteryState extends State<DefaultBattery> {
+class _DefaultBatteryState extends State<DefaultBattery> with TickerProviderStateMixin{
   double _quantity;
+  AnimationController _controller;
+  double _animationQuantity=0;
+
 
   void initState() {
     super.initState();
     _quantity = widget.control.value;
-    widget.control.setListener((value) {
-      setState(() {
-        _quantity = value;
-      });
+    _controller = AnimationController(duration: Duration(seconds: 2),vsync: this);
+    
+    _controller.addListener((){
+      
     });
+    widget.control.setListener((value) {
+      
+    });
+    
   }
 
   @override
@@ -28,7 +36,7 @@ class _DefaultBatteryState extends State<DefaultBattery> {
     return Container(
       width: MediaQuery.of(context).size.width,
       child: CustomPaint(
-        painter: DefaultBatteryPainter(Colors.green),
+        painter: DefaultBatteryPainter(Colors.red,_animationQuantity),
       ),
     );
   }
@@ -36,36 +44,61 @@ class _DefaultBatteryState extends State<DefaultBattery> {
 
 class DefaultBatteryPainter extends CustomPainter {
   final Color _bodyColor; // 电量得颜色
-  static const double _padding = 2; // 电量和边框得边距
-  static const double _topWidth = 6; // 电池冒得宽度
-  static const double _strokeWidth = 4; // 电池得宽度
+  final double _amount;
+  static const double _padding = 3; // 电量和边框的边距
+  static const double _topWidth = 6; // 电池冒的宽度
+  static const double _strokeWidth = 4; // 电池边框的宽度
 
-  const DefaultBatteryPainter(this._bodyColor);
+  const DefaultBatteryPainter(this._bodyColor, this._amount)
+      : assert(_amount >= 0 && _amount <= 1);
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 绘制电池边框
     var strokePaint = Paint()
       ..color = Colors.white
       ..strokeWidth = _strokeWidth
       ..style = PaintingStyle.stroke;
-
     double height = size.width * 0.5;
     double width = size.width;
     Rect strokeRect = Rect.fromLTWH(
-        0 + _strokeWidth / 2,
-        0 + _strokeWidth / 2 - height / 2,
+        _strokeWidth / 2,
+        _strokeWidth / 2 - height / 2,
         width - _strokeWidth - _topWidth,
         height);
-    RRect rRect = RRect.fromRectAndRadius(strokeRect, Radius.circular(8));
+    RRect rRect;
+    rRect = RRect.fromRectAndRadius(strokeRect, const Radius.circular(8));
     canvas.drawRRect(rRect, strokePaint);
 
+    // 绘制电池冒
     double _topHeight = height * 0.3;
-
-    double dx = width - _strokeWidth / 2 + (_topWidth-_strokeWidth);
+    double dx = width - _strokeWidth / 2 + (_topWidth - _strokeWidth - 1);
+    strokePaint.strokeCap = StrokeCap.round;
     canvas.drawLine(
-        Offset(dx, 0-_topHeight),
-        Offset(dx, _topHeight),
-        strokePaint);
+        Offset(dx, 0 - _topHeight), Offset(dx, _topHeight), strokePaint);
+
+    //绘制电量
+    double dleft = _strokeWidth + _padding; // 左上角的点
+    double dtop = -height / 2 + _strokeWidth + _padding;
+    double dwidth =
+        size.width - _strokeWidth * 2 - _padding * 2 - _topWidth; //宽度
+    dwidth = dwidth * _amount; //依据电量百分比来计算宽度
+    double dheight = height - _strokeWidth - _padding * 2; //高度
+    Paint dPaint = Paint()
+      ..color = _bodyColor
+      ..style = PaintingStyle.fill;
+    Rect drect = Rect.fromLTWH(dleft, dtop, dwidth, dheight);
+    RRect dRRect;
+    if (_amount == 1) {
+      dRRect = RRect.fromRectAndRadius(drect, const Radius.circular(4));
+    } else {
+      dRRect = RRect.fromRectAndCorners(drect,
+          topLeft: Radius.circular(4),
+          bottomLeft: const Radius.circular(4),
+          topRight: Radius.circular(2),
+          bottomRight: const Radius.circular(2));
+    }
+    canvas.drawRRect(dRRect, dPaint);
   }
 
   @override
