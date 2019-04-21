@@ -16,41 +16,57 @@ class _DefaultBatteryState extends State<DefaultBattery>
   double _quantity;
   AnimationController _controller;
   double _animationQuantity = 0;
+  Color _color = Colors.red;
 
   void initState() {
     super.initState();
     _quantity = widget.control.value;
-    _controller =
-        AnimationController(duration: Duration(seconds: 2), vsync: this);
+    _controller = AnimationController(
+        duration: Duration(milliseconds: 1500), vsync: this);
     Animation<double> doubleAnim;
+    Animation<Color> colorAnim;
 
-    _controller..addListener(() {
-      if (doubleAnim != null) {
-        _animationQuantity = doubleAnim.value;
-      }
-      setState(() {});
-    })..addStatusListener((status){
-      if(status==AnimationStatus.forward){
-        widget.control.setState(ChargingState.charging);
-      }else if(status==AnimationStatus.dismissed){
-        widget.control.setState(ChargingState.chargingEnd);
-      }
-    });
+    _controller
+      ..addListener(() {
+        setState(() {
+          _color = colorAnim.value;
+          _animationQuantity = doubleAnim.value;
+        });
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.forward) {
+          widget.control.setState(ChargingState.charging);
+        } else if (status == AnimationStatus.dismissed) {
+          widget.control.setState(ChargingState.chargingEnd);
+        }
+      });
 
     widget.control.setListener((value) {
-      doubleAnim = Tween(begin: _quantity,end: value).animate(
-        CurvedAnimation(parent: _controller,curve: Curves.easeIn)
-      );
+      doubleAnim = Tween(begin: _animationQuantity, end: value)
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+      Color endColor;
+      if (value <= 0.2) {
+        endColor = Colors.red;
+      } else if (value < 0.8) {
+        endColor = Colors.yellow;
+      } else {
+        endColor = Colors.green;
+      }
+      colorAnim = ColorTween(begin: _color, end: endColor)
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+      _controller.reset();
       _controller.forward();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    var width = MediaQuery.of(context).size.width*0.7;
+    var height = width*0.5;
     return Container(
-      width: MediaQuery.of(context).size.width,
       child: CustomPaint(
-        painter: DefaultBatteryPainter(Colors.red, _animationQuantity),
+        painter: DefaultBatteryPainter(_color, _animationQuantity),
+        size: Size(width, height),
       ),
     );
   }
@@ -58,9 +74,9 @@ class _DefaultBatteryState extends State<DefaultBattery>
 
 class DefaultBatteryPainter extends CustomPainter {
   final Color _bodyColor; // 电量得颜色
-  final double _amount;
+  final double _amount; //电量
   static const double _padding = 3; // 电量和边框的边距
-  static const double _topWidth = 6; // 电池冒的宽度
+  static const double _topWidth = 10; // 电池冒的宽度
   static const double _strokeWidth = 4; // 电池边框的宽度
 
   const DefaultBatteryPainter(this._bodyColor, this._amount)
@@ -73,31 +89,31 @@ class DefaultBatteryPainter extends CustomPainter {
       ..color = Colors.white
       ..strokeWidth = _strokeWidth
       ..style = PaintingStyle.stroke;
-    double height = size.width * 0.5;
+    double height = size.height;
     double width = size.width;
     Rect strokeRect = Rect.fromLTWH(
-        _strokeWidth / 2,
-        _strokeWidth / 2 - height / 2,
-        width - _strokeWidth - _topWidth,
-        height);
+        _strokeWidth/2,
+        _strokeWidth/2,
+        width-_strokeWidth-_topWidth,
+        height-_strokeWidth);
     RRect rRect;
     rRect = RRect.fromRectAndRadius(strokeRect, const Radius.circular(8));
     canvas.drawRRect(rRect, strokePaint);
 
-    // 绘制电池冒
+    // // 绘制电池冒
     double _topHeight = height * 0.3;
-    double dx = width - _strokeWidth / 2 + (_topWidth - _strokeWidth - 1);
+    double dx = width - _topWidth +_strokeWidth/2+3;
     strokePaint.strokeCap = StrokeCap.round;
     canvas.drawLine(
-        Offset(dx, 0 - _topHeight), Offset(dx, _topHeight), strokePaint);
+        Offset(dx, height/2-_topHeight), Offset(dx,height/2+_topHeight ), strokePaint);
 
     //绘制电量
     double dleft = _strokeWidth + _padding; // 左上角的点
-    double dtop = -height / 2 + _strokeWidth + _padding;
+    double dtop =  _strokeWidth + _padding;
     double dwidth =
         size.width - _strokeWidth * 2 - _padding * 2 - _topWidth; //宽度
     dwidth = dwidth * _amount; //依据电量百分比来计算宽度
-    double dheight = height - _strokeWidth - _padding * 2; //高度
+    double dheight = height - _strokeWidth*2 - _padding * 2; //高度
     Paint dPaint = Paint()
       ..color = _bodyColor
       ..style = PaintingStyle.fill;
@@ -116,7 +132,8 @@ class DefaultBatteryPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(DefaultBatteryPainter oldDelegate) => false;
+  bool shouldRepaint(DefaultBatteryPainter oldDelegate) =>
+      oldDelegate._amount != _amount;
 
   @override
   bool shouldRebuildSemantics(DefaultBatteryPainter oldDelegate) => false;

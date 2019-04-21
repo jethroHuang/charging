@@ -45,15 +45,16 @@ class _HomePageState extends State<HomePage> {
       child: Stack(
         alignment: Alignment.topCenter,
         children: <Widget>[
-          GestureDetector(
-            onTap: (){
-              print('1222');
-            },
-            child: Container(
-            margin: EdgeInsets.only(top: 200),
-            width: MediaQuery.of(context).size.width * 0.7,
+          Container(
+            margin: EdgeInsets.only(top: 72),
             child: DefaultBattery(control),
           ),
+          GestureDetector(
+            onTapDown: (detail){
+              cd();
+              var offset= detail.globalPosition;
+              print('点击坐标$offset');
+            },
           )
         ],
       ),

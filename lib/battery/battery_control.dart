@@ -30,12 +30,12 @@ class BatteryControl{
 
   /// 设置电池电量监听器
   void setListener(QuantityListener listener){
-    listener=listener;
+    this.listener=listener;
   }
 
   /// 设置充电状态监听器
   void setStateListener(ChargingStateListener listener){
-    stateListener = listener;
+    this.stateListener = listener;
   }
   
 }
